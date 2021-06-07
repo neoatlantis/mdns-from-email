@@ -67,18 +67,23 @@ while True:
     ]
 
     the_question = None
+    the_answer = None
     for question in dns_query.questions:
         if question.qtype != 1: continue
-        if str(question.qname).lower() != "deuchi-cn.local.": continue
+        
+        query_domain = str(question.qname).lower()
+        if query_domain not in client.ip_table: continue
+        
         the_question = question
+        the_answer = client.ip_table[query_domain]
         break
 
     if not the_question: continue
 
     # broadcast answer
 
-    if not client.ip:
-        print("CHINA IP NOT AVAILABLE.")
+    if len(client.ip_table.keys()) < 1:
+        print("IP NOT AVAILABLE.")
         client.check_email()
         continue
 
@@ -87,7 +92,7 @@ while True:
         q=DNSQuestion(the_question.qname),
         a=RR(
             the_question.qname,
-            rdata=A(client.ip),
+            rdata=A(the_answer),
             ttl=20
         )
     ) 

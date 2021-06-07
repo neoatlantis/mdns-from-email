@@ -81,7 +81,9 @@ class EmailSearch:
         for domain in results_per_domain:
             results_per_domain[domain].sort(key=lambda e: e[1])
             results_per_domain[domain].reverse()
-            self.ip_table[domain] = results_per_domain[domain][0][0]
+
+            self.ip_table[domain + ("." if not domain.endswith(".") else "")] =\
+                results_per_domain[domain][0][0]
 
         print(self.ip_table)
 
