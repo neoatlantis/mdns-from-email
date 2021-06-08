@@ -45,6 +45,9 @@ def ip_frame_extract(buf):
     }
 
 
+def generate_ip_packet(udppayload):
+    # IP header, 
+    ip_prefix = binascii.unhexlify("45000042cd094000ff110c96c0a80067e00000fb")
 
 
 
@@ -52,6 +55,10 @@ def ip_frame_extract(buf):
 
 udpsocket = socket(AF_INET, SOCK_RAW, IPPROTO_UDP)
 udpsocket2 = socket(AF_INET, SOCK_DGRAM)
+udpsocket2.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+udpsocket2.bind(("0.0.0.0", 5353))
+
+
 while True:
     r, _, __ = select([udpsocket], [], [])
     
@@ -87,16 +94,39 @@ while True:
         client.check_email()
         continue
 
+
+
+    """
+    The determination of whether a given record answers a given question is
+    made using the standard DNS rules: the record name must match the question
+    name, the record rrtype must match the question qtype unless the qtype is
+    "ANY" (255) or the rrtype is "CNAME" (5), and the record rrclass must match
+    the question qclass unless the qclass is "ANY" (255).  As with Unicast DNS,
+    generally only DNS class 1 ("Internet") is used, but should client software
+    use classes other than 1, the matching rules described above MUST be used.
+        --- RFC6762
+    """
+
     dns_answer = DNSRecord(
-        DNSHeader(qr=1, aa=1, ra=1, id=dns_query.header.id),
-        q=DNSQuestion(the_question.qname),
+        DNSHeader(
+            qr=1, aa=1, id=dns_query.header.id,
+            rd=0, # recursion desired = 0
+            ra=0, # recursion available = 0 
+        ),
         a=RR(
-            the_question.qname,
+            rname=the_question.qname,
+            rtype=the_question.qtype,
+            rclass=the_question.qclass | (1<<15), # 1<<15: cache-flush
             rdata=A(the_answer),
-            ttl=20
+            ttl=10
         )
     ) 
 
     # send it out
     udpsocket2.sendto(dns_answer.pack(), ("224.0.0.251", 5353))
+
+    print("Q" * 100)
+    print(dns_query)
+    print("A"*100)
     print(dns_answer)
+    print("")

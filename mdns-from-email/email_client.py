@@ -29,7 +29,9 @@ class EmailSearch:
 
         self.updates = queue.Queue()
 
-        self.ip_table = {}
+        self.ip_table = {
+            "testtesttest.local.": "192.168.1.1",
+        }
 
         self._event_start = threading.Event()
         self._heart = threading.Thread(target=self._work)
@@ -77,7 +79,7 @@ class EmailSearch:
                 results_per_domain[domain].append(result[domain])
 
         # sort domain records
-        self.ip_table = {}
+        self.ip_table = { "testserver.local.": "1.1.1.1" }
         for domain in results_per_domain:
             results_per_domain[domain].sort(key=lambda e: e[1])
             results_per_domain[domain].reverse()
